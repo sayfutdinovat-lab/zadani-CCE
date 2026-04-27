@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poslech s porozuměním — CCE–A2 | @tatiana.sayfutdinova</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { -webkit-user-select:none; -moz-user-select:none; user-select:none; box-sizing:border-box; margin:0; padding:0; }
+  input { -webkit-user-select:text!important; user-select:text!important; }
+
+  :root {
+    --pink:#ed5f90; --dark:#292929; --yellow:#f6f0a9;
+    --white:#fff; --gray:#423d3d; --cream:#f0ebe6;
+    --green:#3db87a; --red:#e05252; --pink-light:#fce8f0;
+  }
+
+  body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--dark); min-height:100vh; }
+
+  /* ── PASSWORD ── */
+  #pw-screen {
+    position:fixed; inset:0; background:var(--dark);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:20px; z-index:9999; padding:24px;
+  }
+  .pw-tag { background:var(--pink); color:#fff; padding:6px 18px; border-radius:20px; font-size:.75rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+  #pw-screen h1 { font-family:'Playfair Display',serif; color:#fff; font-size:1.9rem; text-align:center; line-height:1.3; }
+  #pw-screen .sub { color:#aaa; font-size:.85rem; text-align:center; }
+  #pw-input {
+    padding:14px 20px; border:2px solid #444; border-radius:12px;
+    font-size:1rem; background:#333; color:#fff; width:min(280px,90vw);
+    text-align:center; outline:none; letter-spacing:3px;
+    font-family:'DM Sans',sans-serif; transition:border .2s;
+    -webkit-user-select:text; user-select:text;
+  }
+  #pw-input:focus { border-color:var(--pink); }
+  #pw-input::placeholder { letter-spacing:0; color:#666; font-size:.9rem; }
+  #pw-btn {
+    background:var(--pink); color:#fff; border:none;
+    padding:14px 0; border-radius:30px; font-size:.95rem;
+    font-family:'DM Sans',sans-serif; font-weight:600;
+    cursor:pointer; width:min(280px,90vw); transition:all .2s;
+  }
+  #pw-btn:hover { background:#d44a7c; transform:translateY(-1px); }
+  #pw-err { color:var(--pink); font-size:.82rem; min-height:18px; }
+  .pw-brand { color:var(--pink); font-size:.75rem; }
+
+  #main { display:none; }
+
+  /* ── HEADER ── */
+  .site-header {
+    background:var(--dark); padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100;
+    box-shadow:0 2px 20px rgba(0,0,0,.3);
+  }
+  .hl { display:flex; flex-direction:column; gap:2px; }
+  .hl .lbl { font-size:.7rem; color:#888; text-transform:uppercase; letter-spacing:1px; }
+  .hl .ttl { font-family:'Playfair Display',serif; color:#fff; font-size:1rem; }
+  .hl .ttl span { color:var(--pink); }
+  .brand { color:var(--pink); font-size:.75rem; font-weight:600; }
+
+  /* ── PROGRESS ── */
+  .prog-wrap { background:var(--dark); padding:0 24px 14px; }
+  .prog-bar { background:#3a3a3a; border-radius:99px; height:6px; overflow:hidden; }
+  .prog-fill { background:var(--pink); height:100%; border-radius:99px; width:0%; transition:width .4s; }
+  .prog-txt { color:#888; font-size:.72rem; margin-top:6px; }
+
+  .wrap { max-width:760px; margin:0 auto; padding:28px 16px 80px; }
+
+  /* ── INTRO ── */
+  .intro-card {
+    background:var(--dark); border-radius:16px; padding:24px 28px; margin-bottom:28px;
+    display:flex; flex-wrap:wrap; gap:16px; align-items:center;
+  }
+  .intro-card .info { flex:1; min-width:180px; }
+  .badge { display:inline-block; background:var(--pink); color:#fff; padding:3px 12px; border-radius:20px; font-size:.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .intro-card h2 { font-family:'Playfair Display',serif; color:#fff; font-size:1.5rem; margin-bottom:4px; }
+  .intro-card p { color:#999; font-size:.82rem; line-height:1.6; }
+  .meta-pills { display:flex; flex-wrap:wrap; gap:8px; }
+  .meta-pill { background:rgba(255,255,255,.08); color:#ccc; padding:5px 14px; border-radius:20px; font-size:.78rem; }
+  .meta-pill strong { color:var(--yellow); }
+
+  /* ── AUDIO INSTRUCTION BOX ── */
+  .audio-box {
+    display:flex; align-items:center; gap:16px;
+    background:var(--dark); border-radius:14px;
+    padding:16px 20px; margin-bottom:20px;
+    border-left:5px solid var(--pink);
+  }
+  .audio-box .icon { font-size:2rem; flex-shrink:0; }
+  .audio-box .text { flex:1; }
+  .audio-box .text .num {
+    font-size:.72rem; font-weight:700; color:var(--pink);
+    text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;
+  }
+  .audio-box .text .main {
+    color:#fff; font-size:.9rem; font-weight:600; margin-bottom:4px;
+  }
+  .audio-box .text .sub {
+    color:#aaa; font-size:.78rem; line-height:1.5;
+  }
+  .audio-box .plays {
+    background:#333; border:1.5px solid var(--pink);
+    border-radius:20px; padding:6px 14px;
+    color:var(--pink); font-size:.78rem; font-weight:700;
+    white-space:nowrap; flex-shrink:0; text-align:center;
+  }
+
+  /* ── TASK ── */
+  .task { background:#fff; border-radius:16px; margin-bottom:24px; overflow:hidden; box-shadow:0 2px 20px rgba(0,0,0,.07); border:1.5px solid rgba(237,95,144,.1); }
+  .task-head { background:var(--pink); padding:14px 22px; display:flex; align-items:center; gap:12px; }
+  .task-head h3 { font-family:'Playfair Display',serif; color:#fff; font-size:1.05rem; flex:1; }
+  .task-head .pts { background:rgba(255,255,255,.25); color:#fff; padding:3px 12px; border-radius:20px; font-size:.78rem; font-weight:600; }
+  .task-body { padding:20px 22px; }
+  .task-foot { padding:0 22px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+
+  /* ── INSTRUCTION ── */
+  .inst { font-size:.82rem; color:var(--gray); margin-bottom:18px; line-height:1.6; background:var(--pink-light); border-radius:10px; padding:12px 16px; }
+  .inst strong { color:var(--dark); }
+
+  /* ── QUESTION ── */
+  .q { margin-bottom:18px; }
+  .q-row { display:flex; align-items:flex-start; gap:8px; margin-bottom:10px; }
+  .q-n { flex-shrink:0; width:26px; height:26px; background:var(--pink); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700; margin-top:1px; }
+  .q-txt { font-size:.875rem; font-weight:500; color:var(--dark); line-height:1.5; padding-top:2px; }
+  .q-btns { display:flex; gap:8px; flex-wrap:wrap; padding-left:34px; }
+  .divider { border:none; border-top:1px solid var(--cream); margin:14px 0; }
+  .sit-lbl { font-size:.72rem; font-weight:700; color:var(--pink); letter-spacing:.5px; text-transform:uppercase; margin-bottom:6px; }
+
+  /* ── ANSWER BUTTONS ── */
+  .ab {
+    border:2px solid #e2d9d3; background:#fff; border-radius:10px;
+    padding:9px 16px; font-size:.82rem; font-family:'DM Sans',sans-serif;
+    font-weight:500; color:var(--gray); cursor:pointer; transition:all .18s; line-height:1.4;
+  }
+  .ab:hover:not(:disabled) { border-color:var(--pink); color:var(--pink); background:var(--pink-light); }
+  .ab.sel { border-color:var(--pink); background:var(--pink); color:#fff; font-weight:600; }
+  .ab.ok { border-color:var(--green)!important; background:#e6f8ef!important; color:#1f7a4a!important; font-weight:700!important; }
+  .ab.ok::after { content:' ✓'; }
+  .ab.no { border-color:var(--red)!important; background:#fdeaea!important; color:#b83030!important; font-weight:600!important; }
+  .ab.no::after { content:' ✗'; }
+  .ab.reveal { border-color:var(--green)!important; background:#e6f8ef!important; color:#1f7a4a!important; font-weight:700!important; }
+  .ab.reveal::after { content:' ← správně'; font-size:.72rem; }
+  .ab:disabled { cursor:default; }
+
+  /* ── EXAMPLE ── */
+  .example-q { background:var(--cream); border-radius:10px; padding:12px 16px; margin-bottom:18px; }
+  .ex-lbl { font-size:.7rem; color:#aaa; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+
+  /* ── OPEN INPUT ── */
+  .open-wrap { padding-left:34px; margin-top:8px; }
+  .open-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .unit { font-size:.82rem; color:var(--gray); }
+  .open-in {
+    border:2px solid #e2d9d3; border-radius:10px; padding:9px 14px;
+    font-size:.875rem; font-family:'DM Sans',sans-serif;
+    color:var(--dark); width:min(160px,100%); outline:none; transition:border .2s;
+    -webkit-user-select:text!important; user-select:text!important;
+  }
+  .open-in:focus { border-color:var(--pink); }
+  .open-in.ok { border-color:var(--green); background:#e6f8ef; color:#1f7a4a; font-weight:600; }
+  .open-in.no { border-color:var(--red); background:#fdeaea; }
+  .hint { display:none; font-size:.78rem; color:var(--green); font-weight:600; margin-top:5px; }
+  .hint.show { display:block; }
+
+  /* ── SUBMIT ── */
+  .sub-btn {
+    background:var(--dark); color:#fff; border:none;
+    padding:11px 26px; border-radius:28px;
+    font-family:'DM Sans',sans-serif; font-size:.875rem; font-weight:600;
+    cursor:pointer; transition:all .2s; flex-shrink:0;
+  }
+  .sub-btn:hover { background:var(--pink); transform:translateY(-1px); }
+  .sub-btn:disabled { background:#bbb; cursor:default; transform:none; }
+  .score-txt { font-size:.875rem; color:var(--gray); font-weight:500; }
+  .score-txt strong { color:var(--pink); font-size:1rem; }
+
+  /* ── FINAL ── */
+  .result-banner { display:none; background:var(--dark); border-radius:14px; padding:24px; text-align:center; margin-top:12px; }
+  .result-banner.show { display:block; }
+  .rb-score { font-family:'Playfair Display',serif; font-size:2.6rem; color:var(--pink); margin:8px 0; }
+  .rb-msg { color:#bbb; font-size:.875rem; }
+
+  .wm { text-align:center; padding:28px 16px; color:#bbb; font-size:.72rem; border-top:1px solid rgba(237,95,144,.12); margin-top:40px; }
+  .wm strong { color:var(--pink); }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD -->
+<div id="pw-screen">
+  <div class="pw-tag">🎧 Poslech s porozuměním</div>
+  <h1>CCE–A2<br>Modelová varianta</h1>
+  <p class="sub">Zadejte přístupový kód od lektorky.</p>
+  <input type="password" id="pw-input" placeholder="Přístupový kód" autocomplete="off" />
+  <div id="pw-err"></div>
+  <button id="pw-btn" onclick="checkPw()">Vstoupit →</button>
+  <p class="pw-brand">@tatiana.sayfutdinova</p>
+</div>
+
+<div id="main">
+  <header class="site-header">
+    <div class="hl">
+      <span class="lbl">CCE–A2 | Modelová varianta</span>
+      <span class="ttl">🎧 Poslech <span>s porozuměním</span></span>
+    </div>
+    <span class="brand">@tatiana.sayfutdinova</span>
+  </header>
+  <div class="prog-wrap">
+    <div class="prog-bar"><div class="prog-fill" id="prog"></div></div>
+    <div class="prog-txt" id="prog-txt">0 ze 4 úloh zkontrolováno</div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="intro-card">
+      <div class="info">
+        <div class="badge">Poslech s porozuměním</div>
+        <h2>Nejdříve čtěte, pak poslouchejte!</h2>
+        <p>Přečtěte si nejdříve otázky každé úlohy. Teprve potom spusťte nahrávku v Telegramu. Každou nahrávku uslyšíte <strong style="color:#fff">dvakrát</strong>. Nesmíte používat slovník.</p>
+      </div>
+      <div class="meta-pills">
+        <div class="meta-pill">📝 <strong>4 úlohy</strong></div>
+        <div class="meta-pill">🎯 <strong>19 bodů</strong></div>
+        <div class="meta-pill">🔁 <strong>Každá 2×</strong></div>
+      </div>
+    </div>
+
+    <!-- ══ ÚLOHA 1 ══ -->
+    <div class="task" id="t-p1">
+      <div class="task-head"><h3>Úloha 1</h3><span class="pts">7 bodů</span></div>
+      <div class="task-body">
+
+        <div class="audio-box">
+          <div class="icon">🎧</div>
+          <div class="text">
+            <div class="num">Nahrávka č. 1</div>
+            <div class="main">Nejdříve si přečtěte úkoly 1–7 níže.</div>
+            <div class="sub">Teprve potom spusťte nahrávku č. 1 v Telegramu. Přehrajte ji <strong style="color:#fff">dvakrát</strong>.</div>
+          </div>
+          <div class="plays">🔁 2×</div>
+        </div>
+
+        <div class="inst">Uslyšíte rozhovor kamarádů. Rozhodněte, jestli jsou tvrzení v úkolech 1–7 <strong>pravda (ANO)</strong>, nebo <strong>nejsou pravda (NE)</strong>.</div>
+
+        <div class="q"><div class="q-row"><span class="q-n">1</span><span class="q-txt">Petra se přestěhovala z Brna do Prahy.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',1,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',1,'NE')">NE</button></div></div>
+        <hr class="divider">
+        <div class="q"><div class="q-row"><span class="q-n">2</span><span class="q-txt">Do práce jede asi 20 minut.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',2,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',2,'NE')">NE</button></div></div>
+        <hr class="divider">
+        <div class="q"><div class="q-row"><span class="q-n">3</span><span class="q-txt">Petra bydlí sama v bytě.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',3,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',3,'NE')">NE</button></div></div>
+        <hr class="divider">
+        <div class="q"><div class="q-row"><span class="q-n">4</span><span class="q-txt">V práci začíná v osm hodin.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',4,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',4,'NE')">NE</button></div></div>
+        <hr class="divider">
+        <div class="q"><div class="q-row"><span class="q-n">5</span><span class="q-txt">Petr chodí každý den běhat.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',5,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',5,'NE')">NE</button></div></div>
+        <hr class="divider">
+        <div class="q"><div class="q-row"><span class="q-n">6</span><span class="q-txt">O víkendu pojedou na výlet.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',6,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',6,'NE')">NE</button></div></div>
+        <hr class="divider">
+        <div class="q"><div class="q-row"><span class="q-n">7</span><span class="q-txt">Petra nemá ráda své nové bydlení.</span></div><div class="q-btns"><button class="ab" onclick="pick(this,'p1',7,'ANO')">ANO</button><button class="ab" onclick="pick(this,'p1',7,'NE')">NE</button></div></div>
+      </div>
+      <div class="task-foot">
+        <button class="sub-btn" onclick="checkMC('p1')">Zkontrolovat</button>
+        <div class="score-txt" id="sc-p1"></div>
+      </div>
+    </div>
+
+    <!-- ══ ÚLOHA 2 ══ -->
+    <div class="task" id="t-p2">
+      <div class="task-head"><h3>Úloha 2</h3><span class="pts">5 bodů</span></div>
+      <div class="task-body">
+
+        <div class="audio-box">
+          <div class="icon">🎧</div>
+          <div class="text">
+            <div class="num">Nahrávka č. 2</div>
+            <div class="main">Nejdříve si přečtěte úkoly 8–12 níže.</div>
+            <div class="sub">Teprve potom spusťte nahrávku č. 2 v Telegramu. Přehrajte ji <strong style="color:#fff">dvakrát</strong>.</div>
+          </div>
+          <div class="plays">🔁 2×</div>
+        </div>
+
+        <div class="inst">Uslyšíte pět krátkých monologů. Ke každému úkolu 8–12 <strong>napište jedno správné slovo nebo číslo</strong>.</div>
+
+        <div class="q">
+          <div class="q-row"><span class="q-n">8</span><span class="q-txt">Kolik stupňů bude zítra přes den?</span></div>
+          <div class="open-wrap"><div class="open-row"><input type="text" class="open-in" id="op8" placeholder="číslo" /><span class="unit">stupňů</span></div><div class="hint" id="h8">✅ Správná odpověď: 18</div></div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="q-row"><span class="q-n">9</span><span class="q-txt">V kolik hodin začíná koncert?</span></div>
+          <div class="open-wrap"><input type="text" class="open-in" id="op9" placeholder="čas" /><div class="hint" id="h9">✅ Správná odpověď: 19:00</div></div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="q-row"><span class="q-n">10</span><span class="q-txt">Kolik stojí vstupenka?</span></div>
+          <div class="open-wrap"><div class="open-row"><input type="text" class="open-in" id="op10" placeholder="číslo" /><span class="unit">Kč</span></div><div class="hint" id="h10">✅ Správná odpověď: 250</div></div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="q-row"><span class="q-n">11</span><span class="q-txt">Do kolika hodin je otevřená kavárna?</span></div>
+          <div class="open-wrap"><div class="open-row"><span class="unit">do</span><input type="text" class="open-in" id="op11" placeholder="číslo" /><span class="unit">hodin</span></div><div class="hint" id="h11">✅ Správná odpověď: 22</div></div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="q-row"><span class="q-n">12</span><span class="q-txt">Kolik lidí přijde na oslavu?</span></div>
+          <div class="open-wrap"><input type="text" class="open-in" id="op12" placeholder="číslo" /><div class="hint" id="h12">✅ Správná odpověď: 8</div></div>
+        </div>
+      </div>
+      <div class="task-foot">
+        <button class="sub-btn" onclick="checkOpen()">Zkontrolovat</button>
+        <div class="score-txt" id="sc-p2"></div>
+      </div>
+    </div>
+
+    <!-- ══ ÚLOHA 3 ══ -->
+    <div class="task" id="t-p3">
+      <div class="task-head"><h3>Úloha 3</h3><span class="pts">4 body</span></div>
+      <div class="task-body">
+
+        <div class="audio-box">
+          <div class="icon">🎧</div>
+          <div class="text">
+            <div class="num">Nahrávka č. 3</div>
+            <div class="main">Nejdříve si přečtěte úkoly 13–16 níže.</div>
+            <div class="sub">Teprve potom spusťte nahrávku č. 3 v Telegramu. Přehrajte ji <strong style="color:#fff">dvakrát</strong>.</div>
+          </div>
+          <div class="plays">🔁 2×</div>
+        </div>
+
+        <div class="inst">Uslyšíte krátké rozhovory. U každého úkolu 13–16 vyberte z nabídky A–C jedno správné pokračování rozhovoru. Úkol č. 0 je příklad.</div>
+
+        <div class="example-q">
+          <div class="ex-lbl">Příklad — Úkol 0</div>
+          <div style="font-size:.875rem;font-weight:500;margin-bottom:10px;">Co odpoví muž?</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="ab ok" disabled>A) Ano, to je skvělé.</button>
+            <button class="ab" disabled style="border-color:#ddd;color:#bbb;">B) Vezmu si to.</button>
+            <button class="ab" disabled style="border-color:#ddd;color:#bbb;">C) To nevadí.</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <div class="sit-lbl">V restauraci</div>
+          <div class="q-row"><span class="q-n">13</span><span class="q-txt">Co odpoví číšník?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p3',13,'A')">A) Ano, tady je váš stůl.</button>
+            <button class="ab" onclick="pick(this,'p3',13,'B')">B) Dnes máme zavřeno.</button>
+            <button class="ab" onclick="pick(this,'p3',13,'C')">C) Jídlo stojí 200 korun.</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="sit-lbl">U lékaře</div>
+          <div class="q-row"><span class="q-n">14</span><span class="q-txt">Co odpoví žena?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p3',14,'A')">A) Bolí mě hlava a mám teplotu.</button>
+            <button class="ab" onclick="pick(this,'p3',14,'B')">B) Pracuji v kanceláři.</button>
+            <button class="ab" onclick="pick(this,'p3',14,'C')">C) Včera jsem byla doma.</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="sit-lbl">Na poště</div>
+          <div class="q-row"><span class="q-n">15</span><span class="q-txt">Co odpoví muž?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p3',15,'A')">A) Dopis pošlu zítra.</button>
+            <button class="ab" onclick="pick(this,'p3',15,'B')">B) Děkuji, kde to mám podepsat?</button>
+            <button class="ab" onclick="pick(this,'p3',15,'C')">C) Jdu do práce.</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="sit-lbl">V obchodě</div>
+          <div class="q-row"><span class="q-n">16</span><span class="q-txt">Co odpoví žena?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p3',16,'A')">A) Ano, vezmu si to.</button>
+            <button class="ab" onclick="pick(this,'p3',16,'B')">B) Dnes je pondělí.</button>
+            <button class="ab" onclick="pick(this,'p3',16,'C')">C) Jedu autobusem.</button>
+          </div>
+        </div>
+      </div>
+      <div class="task-foot">
+        <button class="sub-btn" onclick="checkMC('p3')">Zkontrolovat</button>
+        <div class="score-txt" id="sc-p3"></div>
+      </div>
+    </div>
+
+    <!-- ══ ÚLOHA 4 ══ -->
+    <div class="task" id="t-p4">
+      <div class="task-head"><h3>Úloha 4</h3><span class="pts">3 body</span></div>
+      <div class="task-body">
+
+        <div class="audio-box">
+          <div class="icon">🎧</div>
+          <div class="text">
+            <div class="num">Nahrávka č. 4</div>
+            <div class="main">Nejdříve si přečtěte úkoly 17–19 níže.</div>
+            <div class="sub">Teprve potom spusťte nahrávku č. 4 v Telegramu. Přehrajte ji <strong style="color:#fff">dvakrát</strong>.</div>
+          </div>
+          <div class="plays">🔁 2×</div>
+        </div>
+
+        <div class="inst">Uslyšíte tři krátké informace. U každého úkolu 17–19 vyberte jednu správnou odpověď z nabídky A–C.</div>
+
+        <div class="q">
+          <div class="sit-lbl">Text 1 — Autobus</div>
+          <div class="q-row"><span class="q-n">17</span><span class="q-txt">Kdy jede náhradní autobus?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p4',17,'A')">A) Ve 14:30</button>
+            <button class="ab" onclick="pick(this,'p4',17,'B')">B) V 15:30</button>
+            <button class="ab" onclick="pick(this,'p4',17,'C')">C) V 16:30</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="sit-lbl">Text 2 — Restaurace</div>
+          <div class="q-row"><span class="q-n">18</span><span class="q-txt">Do kolika hodin si můžete objednat teplé jídlo?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p4',18,'A')">A) Do 20:00</button>
+            <button class="ab" onclick="pick(this,'p4',18,'B')">B) Do 22:00</button>
+            <button class="ab" onclick="pick(this,'p4',18,'C')">C) Do 11:00</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="q">
+          <div class="sit-lbl">Text 3 — Počasí</div>
+          <div class="q-row"><span class="q-n">19</span><span class="q-txt">Jaké bude zítra počasí?</span></div>
+          <div class="q-btns">
+            <button class="ab" onclick="pick(this,'p4',19,'A')">A) Slunečno</button>
+            <button class="ab" onclick="pick(this,'p4',19,'B')">B) Déšť</button>
+            <button class="ab" onclick="pick(this,'p4',19,'C')">C) Sníh</button>
+          </div>
+        </div>
+      </div>
+      <div class="task-foot">
+        <button class="sub-btn" onclick="checkMC('p4')">Zkontrolovat</button>
+        <div class="score-txt" id="sc-p4"></div>
+      </div>
+    </div>
+
+    <div class="result-banner" id="final-result">
+      <p style="color:#888;font-size:.8rem;margin-bottom:4px;">Celkový výsledek — Poslech s porozuměním</p>
+      <div class="rb-score" id="rb-score">—</div>
+      <div class="rb-msg" id="rb-msg"></div>
+    </div>
+
+    <div class="wm">Materiály připravila <strong>@tatiana.sayfutdinova</strong> | CCE–A2 Modelová varianta | © Veškerá práva vyhrazena</div>
+  </div>
+</div>
+
+<script>
+// ── PASSWORD ──
+const PWD = "poslouchejCCE";
+function checkPw(){
+  if(document.getElementById('pw-input').value === PWD){
+    document.getElementById('pw-screen').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  } else {
+    document.getElementById('pw-err').textContent = '❌ Nesprávný kód. Zkuste to znovu.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && document.getElementById('pw-screen').style.display !== 'none') checkPw();
+});
+
+// ── ANSWERS ──
+const KEY = {
+  p1: {1:'ANO',2:'ANO',3:'NE',4:'ANO',5:'NE',6:'ANO',7:'NE'},
+  p3: {13:'A',14:'A',15:'B',16:'A'},
+  p4: {17:'B',18:'A',19:'B'}
+};
+const OPEN_KEY = {
+  8:  ['18'],
+  9:  ['19:00','19','v 19:00','v 19','19.00'],
+  10: ['250'],
+  11: ['22'],
+  12: ['8']
+};
+
+const ua = {}; let doneCount = 0;
+
+function pick(btn, task, q, val){
+  btn.closest('.q-btns').querySelectorAll('.ab').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if(!ua[task]) ua[task] = {};
+  ua[task][q] = val;
+}
+
+function checkMC(task){
+  const k = KEY[task]; const u = ua[task] || {};
+  let got = 0, tot = Object.keys(k).length;
+  Object.entries(k).forEach(([q, ans]) => {
+    const qi = parseInt(q);
+    document.querySelectorAll(`[onclick*="'${task}',${qi},"]`).forEach(btn => {
+      btn.disabled = true;
+      const bv = btn.getAttribute('onclick').match(/'([^']+)'\)$/)[1];
+      if(bv === ans && u[qi] === ans){ btn.classList.remove('sel'); btn.classList.add('ok'); got++; }
+      else if(bv === ans && u[qi] !== ans){ btn.classList.add('reveal'); }
+      else if(bv !== ans && u[qi] === bv){ btn.classList.remove('sel'); btn.classList.add('no'); }
+    });
+  });
+  document.getElementById('sc-'+task).innerHTML = `<strong>${got}&nbsp;/&nbsp;${tot}</strong> bodů ${got===tot?'🎉':''}`;
+  document.querySelector(`#t-${task} .sub-btn`).disabled = true;
+  doneCount++; updateProg(); tryFinal();
+}
+
+function checkOpen(){
+  let got = 0;
+  [8,9,10,11,12].forEach(n => {
+    const inp = document.getElementById('op'+n);
+    const v = inp.value.trim().toLowerCase();
+    if(OPEN_KEY[n].map(x => x.toLowerCase()).includes(v)){
+      inp.classList.add('ok'); got++;
+    } else {
+      inp.classList.add('no');
+      document.getElementById('h'+n).classList.add('show');
+    }
+    inp.disabled = true;
+  });
+  document.getElementById('sc-p2').innerHTML = `<strong>${got}&nbsp;/&nbsp;5</strong> bodů ${got===5?'🎉':''}`;
+  document.querySelector('#t-p2 .sub-btn').disabled = true;
+  doneCount++; updateProg(); tryFinal();
+}
+
+function updateProg(){
+  document.getElementById('prog').style.width = (doneCount/4*100)+'%';
+  document.getElementById('prog-txt').textContent = `${doneCount} ze 4 úloh zkontrolováno`;
+}
+
+function tryFinal(){
+  if(doneCount < 4) return;
+  let total = 0;
+  const u1 = ua.p1||{}; Object.entries(KEY.p1).forEach(([q,a])=>{ if(u1[parseInt(q)]===a) total++; });
+  [8,9,10,11,12].forEach(n=>{ if(document.getElementById('op'+n).classList.contains('ok')) total++; });
+  const u3 = ua.p3||{}; Object.entries(KEY.p3).forEach(([q,a])=>{ if(u3[parseInt(q)]===a) total++; });
+  const u4 = ua.p4||{}; Object.entries(KEY.p4).forEach(([q,a])=>{ if(u4[parseInt(q)]===a) total++; });
+  const pct = Math.round((total/19)*100);
+  document.getElementById('rb-score').textContent = `${total} / 19 bodů`;
+  document.getElementById('rb-msg').textContent = pct >= 60
+    ? `✅ Výborně! ${pct} % — nad hranicí úspěšnosti (60 %).`
+    : `⚠️ ${pct} % — hranice je 60 %. Nevzdávejte to!`;
+  document.getElementById('final-result').classList.add('show');
+  document.getElementById('final-result').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// ── PROTECTION ──
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey||e.metaKey) && ['u','s','p'].includes(e.key.toLowerCase())) e.preventDefault();
+  if(e.key === 'F12') e.preventDefault();
+  if((e.ctrlKey||e.metaKey) && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase())) e.preventDefault();
+});
+</script>
+</body>
+</html>
